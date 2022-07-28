@@ -1,6 +1,6 @@
 #Policies
-variable "task_role" {
-  default     = null
+variable "task_role_policy" {
+  default     = ""
   type        = string
   description = "The IAM for task role in task definition"
 }
@@ -12,28 +12,22 @@ variable "task_execution_role" {
 }
 
 variable "task_execution_role_policy" {
-  default     = null
+  default     = ""
   description = "Specify the IAM policy for task definition task execution"
   type        = string
 }
 
-# ECS cluster
+# ECS Service
 variable "cluster" {
   description = "Amazon Resource Name (ARN) of cluster which the service runs on"
   type        = string
   default     = null
 }
 
-variable "ecs_create_task_execution_role" {
-  description = "Set to true to create ecs task execution role to ECS Tasks."
-  type        = bool
-  default     = false
-}
-
 variable "retention_in_days" {
   description = "Specifies the number of days you want to retain log events in the specified log group. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653, and 0. If you select 0, the events in the log group are always retained and never expire."
   type        = number
-  default     = 0
+  default     = 7
 }
 
 variable "kms_key_id" {
@@ -78,7 +72,7 @@ variable "name" {
 }
 
 variable "desired_count" {
-  default     = 0
+  default     = 2
   description = "The number of instances of a task definition"
   type        = number
 }
@@ -90,7 +84,7 @@ variable "network_mode" {
 }
 
 variable "requires_compatibilities" {
-  description = " Set of launch types required by the task. The valid values are EC2 and FARGATE."
+  description = "Set of launch types required by the task. The valid values are EC2 and FARGATE."
   type        = list(string)
   default     = []
 }
@@ -101,9 +95,9 @@ variable "launch_type" {
   type        = string
 }
 
-variable "deploy_service" {
-  description = "Use this to use or not terraform to deploy a service, boolean value"
-  default     = false
+variable "create_task_definition" {
+  description = "Whether to create the task definition or not"
+  default     = true
   type        = bool
 }
 
@@ -117,6 +111,12 @@ variable "memory" {
   default     = 1024
   description = "Amount (in MiB) of memory used by the task. If the requires_compatibilities is FARGATE this field is required."
   type        = number
+}
+
+variable "family" {
+  description = "(Required) A unique name for your task definition."
+  type        = string
+  default     = null
 }
 
 variable "volume_name" {
@@ -255,48 +255,9 @@ variable "path" {
   type        = string
 }
 
-#alb security-group
-variable "iport" {
-  description = "Start to end port range (or ICMP type number if protocol is icmp or icmpv6)."
-  default     = 80
-  type        = number
-}
-
-variable "i_protocol" {
-  default     = "tcp"
-  description = "Protocol. If you select a protocol of -1 (semantically equivalent to all, which is not a valid value here), you must specify a from_port and to_port equal to 0"
-  type        = string
-}
-
-variable "cidr_blocks" {
-  default     = "0.0.0.0/0"
-  description = "List of CIDR blocks"
-  type        = string
-}
-
-# service security-group
-variable "e_port" {
-  description = "Start to end port range (or ICMP type number if protocol is icmp or icmpv6)"
-  default     = 0
-  type        = number
-}
-
-variable "e_protocol" {
-  default     = "-1"
-  description = "Protocol. If you select a protocol of -1 (semantically equivalent to all, which is not a valid value here), you must specify a from_port and to_port equal to 0"
-  type        = string
-}
-
 # create load balancer
 variable "create_load_balancer" {
   description = "Whether to create a load balancer for ecs."
-  default     = false
-  type        = bool
-}
-
-# create IAM role
-variable "create_iam_role" {
-  description = "Whether to create an IAM role resource"
   default     = false
   type        = bool
 }
@@ -372,4 +333,30 @@ variable "scaling_adjustment" {
   description = "(Required) The number of members by which to scale, when the adjustment bounds are breached. A positive value scales up. A negative value scales down."
   type        = number
   default     = 2
+}
+
+
+# Security groups
+variable "lb_ingress_rules" {
+  description = "(Optional) Ingress rules to add to the security group"
+  type        = any
+  default     = {}
+}
+
+variable "lb_egress_rules" {
+  description = "(Optional) Egress rules to add to the security group"
+  type        = any
+  default     = {}
+}
+
+variable "svc_ingress_rules" {
+  description = "(Optional) Ingress rules to add to the security group"
+  type        = any
+  default     = {}
+}
+
+variable "svc_egress_rules" {
+  description = "(Optional) Egress rules to add to the security group"
+  type        = any
+  default     = {}
 }

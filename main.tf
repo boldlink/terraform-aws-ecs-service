@@ -4,7 +4,7 @@
 resource "aws_ecs_service" "service" {
   name                               = var.name
   cluster                            = var.cluster
-  task_definition                    = join("", aws_ecs_task_definition.this.*.id)
+  task_definition                    = join("", aws_ecs_task_definition.this.*.arn)
   desired_count                      = var.desired_count
   deployment_minimum_healthy_percent = var.tasks_minimum_healthy_percent
   deployment_maximum_percent         = var.tasks_maximum_percent
@@ -19,7 +19,7 @@ resource "aws_ecs_service" "service" {
     content {
       subnets          = network_configuration.value.subnets
       assign_public_ip = try(network_configuration.value.assign_public_ip, null)
-      security_groups  = try([network_configuration.value.security_groups], [join("", aws_security_group.service.*.id)])
+      security_groups  = [aws_security_group.service[0].id]
     }
   }
 
@@ -31,19 +31,20 @@ resource "aws_ecs_service" "service" {
       target_group_arn = lookup(load_balancer.value, "target_group_arn", try(aws_lb_target_group.main_tg[0].arn, null))
     }
   }
-
-  tags = var.tags
-  depends_on = [
-    aws_security_group.service
-  ]
+  tags = merge(
+    {
+      "Name" = var.name
+    },
+    var.tags,
+  )
 }
 
 ############################
-# ECS Task Defenition
+# ECS Task Definition
 ############################
 resource "aws_ecs_task_definition" "this" {
-  count                    = var.deploy_service ? 1 : 0
-  family                   = "${var.name}_task_new"
+  count                    = local.create_task_definition ? 1 : 0
+  family                   = var.family
   task_role_arn            = join("", aws_iam_role.task_role.*.arn)
   execution_role_arn       = join("", aws_iam_role.task_execution_role.*.arn)
   network_mode             = var.network_mode
@@ -57,23 +58,23 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 ############################
-# IAM Role
+# IAM Roles
 ############################
 resource "aws_iam_role" "task_role" {
-  count              = var.create_iam_role ? 1 : 0
-  name               = "ecs-task-role-${var.name}"
-  assume_role_policy = var.task_role
+  count              = local.create_task_definition && var.task_role_policy != "" ? 1 : 0
+  name               = "${var.name}-ecs-task-role"
+  assume_role_policy = var.task_role_policy
 }
 
 resource "aws_iam_role" "task_execution_role" {
-  count              = var.ecs_create_task_execution_role ? 1 : 0
-  description        = "${var.name} ECS Service IAM Role"
-  name               = "${var.name}_ecs_service_iam_role"
+  count              = local.create_task_definition && var.task_execution_role_policy != "" ? 1 : 0
+  description        = "${var.name} task execution role"
+  name               = "${var.name}-task-execution-role"
   assume_role_policy = var.task_execution_role
 }
 
 resource "aws_iam_role_policy" "task_execution_role_policy" {
-  count  = var.ecs_create_task_execution_role ? 1 : 0
+  count  = var.task_execution_role_policy != "" ? 1 : 0
   name   = "${aws_iam_role.task_execution_role[0].name}-policy"
   role   = aws_iam_role.task_execution_role[0].name
   policy = var.task_execution_role_policy
@@ -98,7 +99,7 @@ resource "aws_lb" "main" {
   internal                   = var.internal
   load_balancer_type         = var.load_balancer_type
   subnets                    = var.alb_subnets
-  security_groups            = [aws_security_group.alb[0].id]
+  security_groups            = [aws_security_group.lb[0].id]
   drop_invalid_header_fields = var.drop_invalid_header_fields
   enable_deletion_protection = var.enable_deletion_protection
   tags                       = var.tags
@@ -122,8 +123,8 @@ resource "aws_lb_target_group" "main_tg" {
   }
 }
 
-#load balancer listener
-resource "aws_lb_listener" "main" {
+#http redirect listener
+resource "aws_lb_listener" "http_redirect" {
   count             = var.create_load_balancer ? 1 : 0
   load_balancer_arn = aws_lb.main[0].id
   port              = var.listener_port
@@ -137,6 +138,21 @@ resource "aws_lb_listener" "main" {
       protocol    = "HTTPS"
       status_code = "HTTP_301"
     }
+  }
+}
+
+## Forward redirected traffic to target group
+resource "aws_lb_listener" "https" {
+  count             = var.create_load_balancer ? 1 : 0
+  load_balancer_arn = aws_lb.main[0].id
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = var.ssl_policy
+  certificate_arn   = var.acm_certificate_arn != null ? var.acm_certificate_arn : aws_acm_certificate.main[0].arn
+
+  default_action {
+    type             = var.default_type
+    target_group_arn = aws_lb_target_group.main_tg[0].arn
   }
 }
 
@@ -177,68 +193,88 @@ resource "aws_acm_certificate" "main" {
   }
 }
 
-## Forward redirected traffic to target group
-resource "aws_lb_listener" "https" {
-  count             = var.create_load_balancer ? 1 : 0
-  load_balancer_arn = aws_lb.main[0].id
-  port              = "443"
-  protocol          = "HTTPS"
-  ssl_policy        = var.ssl_policy
-  certificate_arn   = var.acm_certificate_arn != null ? var.acm_certificate_arn : aws_acm_certificate.main[0].arn
-
-  default_action {
-    type             = var.default_type
-    target_group_arn = aws_lb_target_group.main_tg[0].arn
-  }
-}
-
-# Security Groups
-# Alb security group
-resource "aws_security_group" "alb" {
-  count       = var.create_load_balancer ? 1 : 0
+# Alb Security group
+resource "aws_security_group" "lb" {
+  count       = local.create_lb_sg ? 1 : 0
   name        = "${var.name}-lb-security-group"
-  description = "load balancer security group"
   vpc_id      = var.vpc_id
-  ingress {
-    description = "Allowing traffic in from port 80"
-    from_port   = var.iport
-    to_port     = var.iport
-    protocol    = var.i_protocol
-    cidr_blocks = [var.cidr_blocks]
-  }
-  egress {
-    description = "Allowing traffic out to all IP addresses, any port and any protocol"
-    from_port   = var.e_port
-    to_port     = var.e_port
-    protocol    = var.e_protocol
-    cidr_blocks = [var.cidr_blocks]
-  }
-
-  tags = var.tags
+  description = "Load balancer security group"
+  tags = merge(
+    {
+      "Name" = var.name
+    },
+    var.tags,
+  )
 }
 
-#service security group
-resource "aws_security_group" "service" {
-  count       = var.create_load_balancer ? 1 : 0
-  name        = "${var.name}-service-sg"
-  description = "Allow ssh inbound & all outbound traffic"
-  vpc_id      = var.vpc_id
-  ingress {
-    description     = "Only allowing traffic in from the load balancer security group"
-    from_port       = var.e_port
-    to_port         = var.e_port
-    protocol        = var.e_protocol
-    security_groups = [aws_security_group.alb[0].id]
+resource "aws_security_group_rule" "lb_ingress" {
+  for_each          = var.lb_ingress_rules
+  type              = "ingress"
+  description       = "Allow custom inbound traffic from specific ports."
+  from_port         = lookup(each.value, "from_port")
+  to_port           = lookup(each.value, "to_port")
+  protocol          = lookup(each.value, "protocol")
+  cidr_blocks       = lookup(each.value, "cidr_blocks", [])
+  security_group_id = aws_security_group.lb[0].id
+  lifecycle {
+    create_before_destroy = true
   }
-  egress {
-    description = "Allowing traffic out to all IP addresses, any port and any protocol"
-    from_port   = var.e_port
-    to_port     = var.e_port
-    protocol    = var.e_protocol
-    cidr_blocks = [var.cidr_blocks]
-  }
+}
 
-  tags = var.tags
+resource "aws_security_group_rule" "lb_egress" {
+  for_each          = var.lb_egress_rules
+  type              = "egress"
+  description       = "Allow custom egress traffic"
+  from_port         = lookup(each.value, "from_port", 0)
+  to_port           = lookup(each.value, "to_port", 0)
+  protocol          = "-1"
+  cidr_blocks       = lookup(each.value, "cidr_blocks", ["0.0.0.0/0"])
+  security_group_id = aws_security_group.lb[0].id
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Service Security group
+resource "aws_security_group" "service" {
+  count       = local.create_svc_sg ? 1 : 0
+  name        = "${var.name}-security-group"
+  vpc_id      = var.vpc_id
+  description = "Service security group"
+  tags = merge(
+    {
+      "Name" = var.name
+    },
+    var.tags,
+  )
+}
+
+resource "aws_security_group_rule" "svc_ingress" {
+  for_each          = var.svc_ingress_rules
+  type              = "ingress"
+  description       = "Allow custom inbound traffic from specific ports."
+  from_port         = lookup(each.value, "from_port")
+  to_port           = lookup(each.value, "to_port")
+  protocol          = lookup(each.value, "protocol")
+  cidr_blocks       = lookup(each.value, "cidr_blocks", [])
+  security_group_id = aws_security_group.service[0].id
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_security_group_rule" "svc_egress" {
+  for_each          = var.svc_egress_rules
+  type              = "egress"
+  description       = "Allow custom egress traffic"
+  from_port         = lookup(each.value, "from_port", 0)
+  to_port           = lookup(each.value, "to_port", 0)
+  protocol          = "-1"
+  cidr_blocks       = lookup(each.value, "cidr_blocks", ["0.0.0.0/0"])
+  security_group_id = aws_security_group.service[0].id
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Application AutoScaling Resources
@@ -262,7 +298,6 @@ resource "aws_appautoscaling_policy" "scale_up" {
   service_namespace  = var.service_namespace
   resource_id        = aws_appautoscaling_target.this[0].resource_id
   scalable_dimension = aws_appautoscaling_target.this[0].scalable_dimension
-
 
   step_scaling_policy_configuration {
     adjustment_type         = var.adjustment_type

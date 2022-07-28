@@ -60,9 +60,9 @@ module "ecs_service" {
   source = "../../"
   #checkov:skip=CKV_AWS_111:Ensure IAM policies does not allow write access without constraints"
   requires_compatibilities = ["FARGATE"]
-  deploy_service           = true
   network_mode             = "awsvpc"
   name                     = "${local.name}-service"
+  family                   = "${local.name}-task-definition"
 
   network_configuration = {
     subnets          = flatten(module.vpc.public_subnet_id)
@@ -71,7 +71,7 @@ module "ecs_service" {
 
   cluster                    = module.cluster.id
   vpc_id                     = module.vpc.id
-  task_role                  = data.aws_iam_policy_document.ecs_assume_role_policy.json
+  task_role_policy           = data.aws_iam_policy_document.ecs_assume_role_policy.json
   task_execution_role        = data.aws_iam_policy_document.ecs_assume_role_policy.json
   task_execution_role_policy = data.aws_iam_policy_document.task_execution_role_policy_doc.json
   container_definitions      = local.default_container_definitions
@@ -80,8 +80,24 @@ module "ecs_service" {
   enable_autoscaling         = true
   scalable_dimension         = "ecs:service:DesiredCount"
   service_namespace          = "ecs"
+  svc_ingress_rules = {
+    example_svc = {
+      from_port   = 80
+      to_port     = 80
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+
+  svc_egress_rules = {
+    example_svc = {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
   tags = {
-    Name               = local.name
     Environment        = "examples"
     "user::CostCenter" = "terraform-registry"
   }

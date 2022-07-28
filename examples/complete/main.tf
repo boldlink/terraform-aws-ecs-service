@@ -61,12 +61,11 @@ module "ecs_service_lb" {
   #checkov:skip=CKV_AWS_111:Ensure IAM policies does not allow write access without constraints"
   #checkov:skip=CKV_AWS_150:Ensure that Load Balancer has deletion protection enabled"
   #checkov:skip=CKV_AWS_91:Ensure the ELBv2 (Application/Network) has access logging enabled"
-  #checkov:skip=CKV_AWS_2:Ensure ALB protocol is HTTPS"
   #checkov:skip=CKV_AWS_103:Ensure that load balancer is using TLS 1.2"
   requires_compatibilities = ["FARGATE"]
-  deploy_service           = true
   network_mode             = "awsvpc"
   name                     = "${local.name}-service"
+  family                   = "${local.name}-task-definition"
   network_configuration = {
     subnets          = flatten(module.vpc.public_subnet_id)
     assign_public_ip = true
@@ -74,7 +73,7 @@ module "ecs_service_lb" {
   alb_subnets                = flatten(module.vpc.public_subnet_id)
   cluster                    = module.cluster.id
   vpc_id                     = module.vpc.id
-  task_role                  = data.aws_iam_policy_document.ecs_assume_role_policy.json
+  task_role_policy           = data.aws_iam_policy_document.ecs_assume_role_policy.json
   task_execution_role        = data.aws_iam_policy_document.ecs_assume_role_policy.json
   task_execution_role_policy = data.aws_iam_policy_document.task_execution_role_policy_doc.json
   container_definitions      = local.default_container_definitions
@@ -90,8 +89,40 @@ module "ecs_service_lb" {
   enable_autoscaling         = true
   scalable_dimension         = "ecs:service:DesiredCount"
   service_namespace          = "ecs"
+  lb_ingress_rules = {
+    example_lb = {
+      from_port   = 443
+      to_port     = 443
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+  lb_egress_rules = {
+    example_lb = {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+  svc_ingress_rules = {
+    example_svc = {
+      from_port   = 80
+      to_port     = 80
+      protocol    = "-1"
+      cidr_blocks = [local.cidr_block]
+    }
+  }
+
+  svc_egress_rules = {
+    example_svc = {
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
   tags = {
-    Name               = local.name
     Environment        = "examples"
     "user::CostCenter" = "terraform-registry"
   }
