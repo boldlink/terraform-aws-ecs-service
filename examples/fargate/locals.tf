@@ -7,7 +7,7 @@ locals {
   vpc_id          = data.aws_vpc.supporting.id
   cluster         = data.aws_ecs_cluster.ecs.arn
   partition       = data.aws_partition.current.partition
-  region          = data.aws_region.current.name
+  region          = data.aws_region.current.id
   tags            = merge({ "Name" = var.name }, var.tags)
 
   default_container_definitions = jsonencode(

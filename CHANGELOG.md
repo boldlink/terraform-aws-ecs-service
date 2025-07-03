@@ -14,19 +14,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: CKV_AWS_152 Ensure that Load Balancer (Network/Gateway) has cross-zone load balancing enabled
 - fix: CKV2_AWS_20 Ensure that ALB redirects HTTP requests into HTTPS ones
 - fix: CKV_AWS_261 Ensure HTTP HTTPS Target group defines Healthcheck
-- fix: CKV_TF_2 Ensure Terraform module sources use a tag with a version number
-- feat: showcase load balancer protection using WAF
-- feat: more than one security group for ecs service
 - feat: Add EC2 usage example
 - feat: Possibly use lb module for load-balancer resource
-- feat: Review ecs-service arguments, add and test those missing.
 - feat: Use load-balancer module in example
 - feat: Add more options for module cloudwatch log group
 - feat: Exclusively use acm certificate (not self_signed_cert) for complete example
 - feat: consolidate ecs cluster module and ecs service module into one
-- feat: Add missing aws_ecs_task_definition arguments and showcase them in examples
 - feat: expand volume block of the task definition as it has more configuration
 - feat: Add example for service security group using a security group id for `service_ingress_sg`
+
+## [1.13.0] - 2025-07-03
+### Changes
+- fix: deprecated data.aws_region.current.name attribute by upgrading cluster module to v3.0.0
+- fix: VPC data source error by adding state filter to ensure only available VPCs are selected
+- fix: resource naming conflicts by adding random suffix to prevent conflicts with existing resources
+- fix: multiple EC2 VPCs matched error in complete example data sources
+- fix: deprecated data.aws_region.current.name replaced with data.aws_region.current.id in examples
+- feat: add capacity provider strategy support for ECS services with FARGATE and FARGATE_SPOT options
+- feat: add capacity_provider_strategy variable to allow mixed capacity provider deployments
+- feat: add fargate spot service example with capacity provider strategy configuration
+- feat: add fargate spot container definitions with cost optimization environment variables
+- feat: add random resource generation for unique naming in complete example
 
 ## [1.12.2] - 2024-06-10
 ### Changes

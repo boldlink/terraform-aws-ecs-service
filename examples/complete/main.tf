@@ -1,3 +1,13 @@
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
+}
+
+resource "random_string" "suffix" {
+  length  = 4
+  special = false
+  upper   = false
+}
+
 module "access_logs_bucket" {
   source            = "boldlink/s3/aws"
   version           = "2.3.1"
@@ -193,4 +203,65 @@ module "ecs_service_nlb" {
   # Load balancer sg
   lb_ingress_rules = var.nlb_ingress_rules
   depends_on       = [module.access_logs_bucket]
+}
+
+module "ecs_service_fargate_spot" {
+  #checkov:skip=CKV_AWS_290: "Ensure IAM policies does not allow write access without constraints"
+  #checkov:skip=CKV_AWS_355: "Ensure no IAM policies documents allow "*" as a statement's resource for restrictable actions"
+  source                   = "../../"
+  requires_compatibilities = var.requires_compatibilities
+  network_mode             = var.network_mode
+  name                     = "${var.name}-fargate-spot-service"
+  family                   = "${var.name}-fargate-spot-task-definition"
+  enable_execute_command   = var.enable_execute_command
+  
+  # Use capacity provider strategy instead of launch_type for FARGATE_SPOT
+  capacity_provider_strategy = [
+    {
+      capacity_provider = "FARGATE_SPOT"
+      weight           = 4
+      base             = 0
+    },
+    {
+      capacity_provider = "FARGATE"
+      weight           = 1
+      base             = 1
+    }
+  ]
+  
+  network_configuration = {
+    subnets          = local.private_subnets
+    assign_public_ip = true
+  }
+
+  cluster                           = local.cluster
+  vpc_id                            = local.vpc_id
+  task_assume_role_policy           = data.aws_iam_policy_document.ecs_assume_role_policy.json
+  task_role_policy                  = data.aws_iam_policy_document.task_role_policy_doc.json
+  task_execution_assume_role_policy = data.aws_iam_policy_document.ecs_assume_role_policy.json
+  task_execution_role_policy        = local.task_execution_role_policy_doc
+  container_definitions             = local.fargate_spot_container_definitions
+  kms_key_id                        = data.aws_kms_alias.supporting_kms.target_key_arn
+  force_new_deployment              = var.force_new_deployment
+  desired_count                     = 3
+  tasks_minimum_healthy_percent     = 50
+  tasks_maximum_percent             = 200
+  propagate_tags                    = "SERVICE"
+  tags                              = merge(local.tags, {
+    CostOptimization = "fargate-spot"
+    Service         = "fargate-spot-demo"
+  })
+
+  # Service security group rules for direct access (no load balancer)
+  service_ingress_rules = [
+    {
+      from_port   = var.containerport
+      to_port     = var.containerport
+      protocol    = "tcp"
+      description = "HTTP access to fargate spot service"
+      cidr_blocks = [local.vpc_cidr]
+    }
+  ]
+
+  retention_in_days = var.retention_in_days
 }

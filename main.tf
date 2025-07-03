@@ -6,7 +6,7 @@ resource "aws_ecs_service" "service" {
   desired_count                      = var.desired_count
   deployment_minimum_healthy_percent = var.tasks_minimum_healthy_percent
   deployment_maximum_percent         = var.tasks_maximum_percent
-  launch_type                        = var.launch_type
+  launch_type                        = length(var.capacity_provider_strategy) > 0 ? null : var.launch_type
   enable_execute_command             = var.enable_execute_command
   force_new_deployment               = var.force_new_deployment
   triggers                           = var.triggers
@@ -15,6 +15,15 @@ resource "aws_ecs_service" "service" {
 
   deployment_controller {
     type = var.deployment_controller_type
+  }
+
+  dynamic "capacity_provider_strategy" {
+    for_each = var.capacity_provider_strategy
+    content {
+      capacity_provider = capacity_provider_strategy.value.capacity_provider
+      weight           = capacity_provider_strategy.value.weight
+      base             = capacity_provider_strategy.value.base
+    }
   }
 
   dynamic "network_configuration" {

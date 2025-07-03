@@ -121,6 +121,11 @@ data "aws_vpc" "supporting" {
     name   = "tag:Name"
     values = [var.supporting_resources_name]
   }
+  
+  filter {
+    name   = "state"
+    values = ["available"]
+  }
 }
 
 data "aws_subnets" "public" {
