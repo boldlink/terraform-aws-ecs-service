@@ -519,5 +519,24 @@ variable "propagate_tags" {
   description = "(Optional) Whether to propagate the tags from the task definition or the service to the tasks. The valid values are SERVICE and TASK_DEFINITION"
   type        = string
   default     = "TASK_DEFINITION"
+}
 
+variable "capacity_provider_strategy" {
+  description = <<-EOT
+  (Optional) Set of capacity provider strategies to use for the service. Can be one or more. List of maps with the following keys:
+  
+  capacity_provider_strategy = [{
+    capacity_provider = string # Name of the capacity provider (FARGATE, FARGATE_SPOT, or custom EC2 capacity provider)
+    weight           = number # Relative percentage of the total number of launched tasks that should use the specified capacity provider
+    base             = number # Number of tasks, at a minimum, to run on the specified capacity provider
+  }]
+  
+  Note: Cannot be used in conjunction with launch_type. If capacity_provider_strategy is specified, launch_type will be ignored.
+  EOT
+  type = list(object({
+    capacity_provider = string
+    weight           = optional(number, 1)
+    base             = optional(number, 0)
+  }))
+  default = []
 }

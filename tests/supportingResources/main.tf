@@ -1,6 +1,6 @@
 module "ecs_vpc" {
   source                 = "boldlink/vpc/aws"
-  version                = "3.0.4"
+  version                = "3.3.0"
   name                   = var.name
   cidr_block             = var.cidr_block
   enable_dns_support     = var.enable_dns_support
@@ -46,7 +46,7 @@ resource "aws_cloudwatch_log_group" "cluster" {
 
 module "cluster" {
   source  = "boldlink/ecs-cluster/aws"
-  version = "1.1.1"
+  version = "3.0.0"
   name    = var.name
   tags    = local.tags
   configuration = {

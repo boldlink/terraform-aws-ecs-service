@@ -1,6 +1,6 @@
 locals {
   create_task_definition = var.deployment_controller_type != "EXTERNAL" && var.create_task_definition ? true : false
-  region                 = data.aws_region.current.name
+  region                 = data.aws_region.current.id
   partition              = data.aws_partition.current.partition
   account_id             = data.aws_caller_identity.current.account_id
   dns_suffix             = data.aws_partition.current.dns_suffix
