@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - feat: expand volume block of the task definition as it has more configuration
 - feat: Add example for service security group using a security group id for `service_ingress_sg`
 
+
 ## [1.13.0] - 2025-07-03
 ### Changes
 - fix: deprecated data.aws_region.current.name attribute by upgrading cluster module to v3.0.0

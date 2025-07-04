@@ -10,7 +10,7 @@ resource "random_string" "suffix" {
 
 module "access_logs_bucket" {
   source            = "boldlink/s3/aws"
-  version           = "2.3.1"
+  version           = "2.5.1"
   bucket            = local.bucket
   force_destroy     = var.force_destroy
   sse_sse_algorithm = "AES256" # For production use aws:kms with your CMK and the proper key policy allowing ebs account to use the cmk
@@ -214,21 +214,21 @@ module "ecs_service_fargate_spot" {
   name                     = "${var.name}-fargate-spot-service"
   family                   = "${var.name}-fargate-spot-task-definition"
   enable_execute_command   = var.enable_execute_command
-  
+
   # Use capacity provider strategy instead of launch_type for FARGATE_SPOT
   capacity_provider_strategy = [
     {
       capacity_provider = "FARGATE_SPOT"
-      weight           = 4
-      base             = 0
+      weight            = 4
+      base              = 0
     },
     {
       capacity_provider = "FARGATE"
-      weight           = 1
-      base             = 1
+      weight            = 1
+      base              = 1
     }
   ]
-  
+
   network_configuration = {
     subnets          = local.private_subnets
     assign_public_ip = true
@@ -247,9 +247,9 @@ module "ecs_service_fargate_spot" {
   tasks_minimum_healthy_percent     = 50
   tasks_maximum_percent             = 200
   propagate_tags                    = "SERVICE"
-  tags                              = merge(local.tags, {
+  tags = merge(local.tags, {
     CostOptimization = "fargate-spot"
-    Service         = "fargate-spot-demo"
+    Service          = "fargate-spot-demo"
   })
 
   # Service security group rules for direct access (no load balancer)

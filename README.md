@@ -186,8 +186,8 @@ module "ecs_service" {
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.51.1 |
-| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.0.5 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
+| <a name="provider_tls"></a> [tls](#provider\_tls) | 4.1.0 |
 
 ## Modules
 
@@ -242,6 +242,7 @@ No modules.
 | <a name="input_associate_with_waf"></a> [associate\_with\_waf](#input\_associate\_with\_waf) | Whether to associate created ALB with AWS WAFv2 ACL | `bool` | `false` | no |
 | <a name="input_associate_with_wafregional"></a> [associate\_with\_wafregional](#input\_associate\_with\_wafregional) | Whether to associate created ALB with WAF Regional Web ACL | `bool` | `false` | no |
 | <a name="input_autoscale_role_arn"></a> [autoscale\_role\_arn](#input\_autoscale\_role\_arn) | (Optional) The ARN of the IAM role that allows Application AutoScaling to modify your scalable target on your behalf. | `string` | `null` | no |
+| <a name="input_capacity_provider_strategy"></a> [capacity\_provider\_strategy](#input\_capacity\_provider\_strategy) | (Optional) Set of capacity provider strategies to use for the service. Can be one or more. List of maps with the following keys:<br><br>capacity\_provider\_strategy = [{<br>  capacity\_provider = string # Name of the capacity provider (FARGATE, FARGATE\_SPOT, or custom EC2 capacity provider)<br>  weight           = number # Relative percentage of the total number of launched tasks that should use the specified capacity provider<br>  base             = number # Number of tasks, at a minimum, to run on the specified capacity provider<br>}]<br><br>Note: Cannot be used in conjunction with launch\_type. If capacity\_provider\_strategy is specified, launch\_type will be ignored. | <pre>list(object({<br>    capacity_provider = string<br>    weight            = number<br>    base              = number<br>  }))</pre> | `[]` | no |
 | <a name="input_cluster"></a> [cluster](#input\_cluster) | Amazon Resource Name (ARN) of cluster which the service runs on | `string` | `null` | no |
 | <a name="input_container_definitions"></a> [container\_definitions](#input\_container\_definitions) | Container definitions provided as valid JSON document. Default uses golang:alpine running a simple hello world. | `string` | `null` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | Number of cpu units used by the task. If the requires\_compatibilities is FARGATE this field is required. | `number` | `256` | no |
@@ -267,7 +268,7 @@ No modules.
 | <a name="input_lb_ingress_rules"></a> [lb\_ingress\_rules](#input\_lb\_ingress\_rules) | Ingress rules to add to the load balancer security group. The rules defined here will be used by service security group<br><br>lb\_ingress\_rules = [{<br>    from\_port   = number<br>    to\_port     = number<br>    protocol    = string<br>    description = string<br>    cidr\_blocks = list(string)<br>  }] | `list(any)` | `[]` | no |
 | <a name="input_listener_port"></a> [listener\_port](#input\_listener\_port) | (Required) The port to listen on for the load balancer | `number` | `80` | no |
 | <a name="input_listener_protocol"></a> [listener\_protocol](#input\_listener\_protocol) | (Required) The protocol to listen on. Valid values are HTTP, HTTPS, TCP, or SSL | `string` | `"HTTP"` | no |
-| <a name="input_load_balancer"></a> [load\_balancer](#input\_load\_balancer) | (Optional) Configuration block for load balancers, accepts the following arguments:<br><br>load\_balancer = [{<br>  container\_name   = string # Name of the container to associate with the load balancer<br>  container\_port   = number # Port number the container listens on<br>  target\_group\_arn = string   # ARN of the target group to associate with the load balancer when using an external Alb/NLB<br>}] | `any` | `[]` | no |
+| <a name="input_load_balancer"></a> [load\_balancer](#input\_load\_balancer) | (Optional) Configuration block when you use a external load balancer, ex shared LB, accepts the following arguments:<br><br>load\_balancer = [{<br>  container\_name   = string<br>  container\_port   = number<br>  target\_group\_arn = string<br>}] | `any` | `[]` | no |
 | <a name="input_load_balancer_type"></a> [load\_balancer\_type](#input\_load\_balancer\_type) | (Optional) The type of load balancer to create. Possible values are application, gateway, or network. The default value is application. | `string` | `"application"` | no |
 | <a name="input_matcher"></a> [matcher](#input\_matcher) | (May be required) Response codes to use when checking for a healthy responses from a target. You can specify multiple values (for example, 200,202 for HTTP(s)) | `string` | `null` | no |
 | <a name="input_max_capacity"></a> [max\_capacity](#input\_max\_capacity) | (Required) The max capacity of the scalable target. | `number` | `2` | no |
@@ -282,7 +283,7 @@ No modules.
 | <a name="input_retention_in_days"></a> [retention\_in\_days](#input\_retention\_in\_days) | Specifies the number of days you want to retain log events in the specified log group. Possible values are: 1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1827, 3653, and 0. If you select 0, the events in the log group are always retained and never expire. | `number` | `3653` | no |
 | <a name="input_scalable_dimension"></a> [scalable\_dimension](#input\_scalable\_dimension) | (Required) The scalable dimension of the scalable target. | `string` | `""` | no |
 | <a name="input_scheduled_actions"></a> [scheduled\_actions](#input\_scheduled\_actions) | Scheduled actions to apply to the ecs scalable target. | <pre>list(object({<br>    name         = string<br>    schedule     = string<br>    min_capacity = number<br>    max_capacity = number<br>    timezone     = string<br>  }))</pre> | `[]` | no |
-| <a name="input_self_signed_cert_common_name"></a> [self\_signed\_cert\_common\_name](#input\_self\_signed\_cert\_common\_name) | Distinguished name | `string` | `"devboldlink.wpengine.com"` | no |
+| <a name="input_self_signed_cert_common_name"></a> [self\_signed\_cert\_common\_name](#input\_self\_signed\_cert\_common\_name) | Distinguished name | `string` | `"devboldlink.boldlink.io"` | no |
 | <a name="input_self_signed_cert_organization"></a> [self\_signed\_cert\_organization](#input\_self\_signed\_cert\_organization) | The organization owning this self signed certificate | `string` | `"Boldlink-SIG"` | no |
 | <a name="input_service_ingress_rules"></a> [service\_ingress\_rules](#input\_service\_ingress\_rules) | Ingress rules to add to the service security group.<br><br>  service\_ingress\_rules = [{<br>      from\_port                = number<br>      to\_port                  = number<br>      protocol                 = string<br>      description              = string<br>      cidr\_blocks              = list(string)<br>  }] | `list(any)` | `[]` | no |
 | <a name="input_service_ingress_rules_sg"></a> [service\_ingress\_rules\_sg](#input\_service\_ingress\_rules\_sg) | Ingress rules to add to the service security group.<br><br>  service\_ingress\_rules = [{<br>    from\_port                = number<br>    to\_port                  = number<br>    protocol                 = string<br>    description              = string<br>    source\_security\_group\_id = string<br>  }] | `list(any)` | `[]` | no |

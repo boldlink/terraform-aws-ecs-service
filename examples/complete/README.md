@@ -34,19 +34,22 @@ To test the deployment, follow these steps:
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.14.11 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.0.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.51.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_access_logs_bucket"></a> [access\_logs\_bucket](#module\_access\_logs\_bucket) | boldlink/s3/aws | 2.3.1 |
+| <a name="module_access_logs_bucket"></a> [access\_logs\_bucket](#module\_access\_logs\_bucket) | boldlink/s3/aws | 2.5.1 |
 | <a name="module_ecs_service_alb"></a> [ecs\_service\_alb](#module\_ecs\_service\_alb) | ../../ | n/a |
+| <a name="module_ecs_service_fargate_spot"></a> [ecs\_service\_fargate\_spot](#module\_ecs\_service\_fargate\_spot) | ../../ | n/a |
 | <a name="module_ecs_service_nlb"></a> [ecs\_service\_nlb](#module\_ecs\_service\_nlb) | ../../ | n/a |
 | <a name="module_waf_acl"></a> [waf\_acl](#module\_waf\_acl) | boldlink/waf/aws | 1.0.3 |
 
@@ -54,6 +57,8 @@ To test the deployment, follow these steps:
 
 | Name | Type |
 |------|------|
+| [random_id.bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
+| [random_string.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_ecs_cluster.ecs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecs_cluster) | data source |
 | [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
