@@ -34,12 +34,14 @@ To test the deployment, follow these steps:
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 0.14.11 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.0.0 |
+| <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.0.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 5.51.1 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.2.0 |
+| <a name="provider_random"></a> [random](#provider\_random) | 3.7.2 |
 
 ## Modules
 
@@ -47,6 +49,7 @@ To test the deployment, follow these steps:
 |------|--------|---------|
 | <a name="module_access_logs_bucket"></a> [access\_logs\_bucket](#module\_access\_logs\_bucket) | boldlink/s3/aws | 2.3.1 |
 | <a name="module_ecs_service_alb"></a> [ecs\_service\_alb](#module\_ecs\_service\_alb) | ../../ | n/a |
+| <a name="module_ecs_service_fargate_spot"></a> [ecs\_service\_fargate\_spot](#module\_ecs\_service\_fargate\_spot) | ../../ | n/a |
 | <a name="module_ecs_service_nlb"></a> [ecs\_service\_nlb](#module\_ecs\_service\_nlb) | ../../ | n/a |
 | <a name="module_waf_acl"></a> [waf\_acl](#module\_waf\_acl) | boldlink/waf/aws | 1.0.3 |
 
@@ -54,6 +57,8 @@ To test the deployment, follow these steps:
 
 | Name | Type |
 |------|------|
+| [random_id.bucket_suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
+| [random_string.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_ecs_cluster.ecs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecs_cluster) | data source |
 | [aws_elb_service_account.main](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/elb_service_account) | data source |
@@ -74,7 +79,7 @@ To test the deployment, follow these steps:
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_access_logs_enabled"></a> [access\_logs\_enabled](#input\_access\_logs\_enabled) | Whether to enable access logs for the lb | `bool` | `true` | no |
-| <a name="input_alb_ingress_rules"></a> [alb\_ingress\_rules](#input\_alb\_ingress\_rules) | Incoming traffic configuration for the load balancer security group | `list(any)` | <pre>[<br>  {<br>    "cidr_blocks": [<br>      "0.0.0.0/0"<br>    ],<br>    "description": "Allow traffic to load balancer on port 443",<br>    "from_port": 443,<br>    "protocol": "tcp",<br>    "to_port": 443<br>  },<br>  {<br>    "cidr_blocks": [<br>      "0.0.0.0/0"<br>    ],<br>    "description": "Allow traffic to alb load balancer on port 80",<br>    "from_port": 80,<br>    "protocol": "tcp",<br>    "to_port": 80<br>  }<br>]</pre> | no |
+| <a name="input_alb_ingress_rules"></a> [alb\_ingress\_rules](#input\_alb\_ingress\_rules) | Incoming traffic configuration for the load balancer security group | `list(any)` | <pre>[<br/>  {<br/>    "cidr_blocks": [<br/>      "0.0.0.0/0"<br/>    ],<br/>    "description": "Allow traffic to load balancer on port 443",<br/>    "from_port": 443,<br/>    "protocol": "tcp",<br/>    "to_port": 443<br/>  },<br/>  {<br/>    "cidr_blocks": [<br/>      "0.0.0.0/0"<br/>    ],<br/>    "description": "Allow traffic to alb load balancer on port 80",<br/>    "from_port": 80,<br/>    "protocol": "tcp",<br/>    "to_port": 80<br/>  }<br/>]</pre> | no |
 | <a name="input_cloudwatch_metrics_enabled"></a> [cloudwatch\_metrics\_enabled](#input\_cloudwatch\_metrics\_enabled) | Whether to enable cloudwatch metrics | `bool` | `false` | no |
 | <a name="input_containerport"></a> [containerport](#input\_containerport) | Specify container port | `number` | `5000` | no |
 | <a name="input_cpu"></a> [cpu](#input\_cpu) | The number of cpu units to allocate | `number` | `10` | no |
@@ -91,15 +96,15 @@ To test the deployment, follow these steps:
 | <a name="input_memory"></a> [memory](#input\_memory) | The size of memory to allocate in MiBs | `number` | `512` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name of the stack | `string` | `"complete-ecs-example"` | no |
 | <a name="input_network_mode"></a> [network\_mode](#input\_network\_mode) | Docker networking mode to use for the containers in the task. Valid values are none, bridge, awsvpc, and host. | `string` | `"awsvpc"` | no |
-| <a name="input_nlb_ingress_rules"></a> [nlb\_ingress\_rules](#input\_nlb\_ingress\_rules) | Incoming traffic configuration for the NLB load balancer security group | `list(any)` | <pre>[<br>  {<br>    "cidr_blocks": [<br>      "0.0.0.0/0"<br>    ],<br>    "description": "Allow traffic to nlb load balancer on port 5000",<br>    "from_port": 5000,<br>    "protocol": "tcp",<br>    "to_port": 5000<br>  }<br>]</pre> | no |
+| <a name="input_nlb_ingress_rules"></a> [nlb\_ingress\_rules](#input\_nlb\_ingress\_rules) | Incoming traffic configuration for the NLB load balancer security group | `list(any)` | <pre>[<br/>  {<br/>    "cidr_blocks": [<br/>      "0.0.0.0/0"<br/>    ],<br/>    "description": "Allow traffic to nlb load balancer on port 5000",<br/>    "from_port": 5000,<br/>    "protocol": "tcp",<br/>    "to_port": 5000<br/>  }<br/>]</pre> | no |
 | <a name="input_path"></a> [path](#input\_path) | Destination for the health check request. Required for HTTP/HTTPS ALB and HTTP NLB. Only applies to HTTP/HTTPS. | `string` | `"/healthz"` | no |
-| <a name="input_requires_compatibilities"></a> [requires\_compatibilities](#input\_requires\_compatibilities) | Set of launch types required by the task. The valid values are EC2 and FARGATE. | `list(string)` | <pre>[<br>  "FARGATE"<br>]</pre> | no |
+| <a name="input_requires_compatibilities"></a> [requires\_compatibilities](#input\_requires\_compatibilities) | Set of launch types required by the task. The valid values are EC2 and FARGATE. | `list(string)` | <pre>[<br/>  "FARGATE"<br/>]</pre> | no |
 | <a name="input_retention_in_days"></a> [retention\_in\_days](#input\_retention\_in\_days) | Number of days you want to retain log events in the specified log group. | `number` | `1` | no |
 | <a name="input_sampled_requests_enabled"></a> [sampled\_requests\_enabled](#input\_sampled\_requests\_enabled) | Whether to enable simple requests | `bool` | `false` | no |
 | <a name="input_scalable_dimension"></a> [scalable\_dimension](#input\_scalable\_dimension) | The scalable dimension of the scalable target. | `string` | `"ecs:service:DesiredCount"` | no |
 | <a name="input_service_namespace"></a> [service\_namespace](#input\_service\_namespace) | The AWS service namespace of the scalable target. | `string` | `"ecs"` | no |
 | <a name="input_supporting_resources_name"></a> [supporting\_resources\_name](#input\_supporting\_resources\_name) | Name of the supporting resources stack | `string` | `"terraform-aws-ecs-service"` | no |
-| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to the resources | `map(string)` | <pre>{<br>  "Department": "DevOps",<br>  "Environment": "example",<br>  "InstanceScheduler": true,<br>  "LayerId": "cExample",<br>  "LayerName": "cExample",<br>  "Owner": "Boldlink",<br>  "Project": "Examples",<br>  "user::CostCenter": "terraform"<br>}</pre> | no |
+| <a name="input_tags"></a> [tags](#input\_tags) | Tags to apply to the resources | `map(string)` | <pre>{<br/>  "Department": "DevOps",<br/>  "Environment": "example",<br/>  "InstanceScheduler": true,<br/>  "LayerId": "cExample",<br/>  "LayerName": "cExample",<br/>  "Owner": "Boldlink",<br/>  "Project": "Examples",<br/>  "user::CostCenter": "terraform"<br/>}</pre> | no |
 | <a name="input_tg_port"></a> [tg\_port](#input\_tg\_port) | Port on which targets receive traffic, unless overridden when registering a specific target. Required when target\_type is instance or ip. | `number` | `5000` | no |
 
 ## Outputs
