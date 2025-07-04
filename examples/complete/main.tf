@@ -10,7 +10,7 @@ resource "random_string" "suffix" {
 
 module "access_logs_bucket" {
   source            = "boldlink/s3/aws"
-  version           = "2.3.1"
+  version           = "2.5.1"
   bucket            = local.bucket
   force_destroy     = var.force_destroy
   sse_sse_algorithm = "AES256" # For production use aws:kms with your CMK and the proper key policy allowing ebs account to use the cmk

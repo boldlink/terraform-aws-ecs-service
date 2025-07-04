@@ -47,7 +47,7 @@ To test the deployment, follow these steps:
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_access_logs_bucket"></a> [access\_logs\_bucket](#module\_access\_logs\_bucket) | boldlink/s3/aws | 2.3.1 |
+| <a name="module_access_logs_bucket"></a> [access\_logs\_bucket](#module\_access\_logs\_bucket) | boldlink/s3/aws | 2.5.1 |
 | <a name="module_ecs_service_alb"></a> [ecs\_service\_alb](#module\_ecs\_service\_alb) | ../../ | n/a |
 | <a name="module_ecs_service_fargate_spot"></a> [ecs\_service\_fargate\_spot](#module\_ecs\_service\_fargate\_spot) | ../../ | n/a |
 | <a name="module_ecs_service_nlb"></a> [ecs\_service\_nlb](#module\_ecs\_service\_nlb) | ../../ | n/a |
